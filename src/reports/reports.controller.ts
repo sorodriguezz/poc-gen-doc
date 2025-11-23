@@ -26,34 +26,6 @@ export class ReportsController {
     return this.reportsService.getUsersExportProgress();
   }
 
-  @Get('users/xlsx/stream-progress')
-  async exportUsersExcelWithProgress(@Res() res: Response) {
-    if (!this.limiter.acquire()) {
-      throw new BadRequestException(
-        'Hay demasiadas exportaciones en ejecución, inténtalo más tarde.',
-      );
-    }
-
-    // Configurar headers para streaming de texto
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    try {
-      await this.reportsService.writeUsersExcelWithProgress(res);
-    } catch (err) {
-      this.logger.error('Error generating XLSX with progress', err);
-      if (!res.headersSent) {
-        res.status(500).send('Error generating XLSX with progress');
-      }
-    } finally {
-      this.limiter.release();
-      if (!res.headersSent) {
-        res.end();
-      }
-    }
-  }
-
   @Get('users/xlsx')
   async exportUsersExcel(@Res() res: Response) {
     if (!this.limiter.acquire()) {

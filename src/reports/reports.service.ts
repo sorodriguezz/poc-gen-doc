@@ -5,6 +5,7 @@ import { User } from '../user.entity';
 import * as ExcelJS from 'exceljs';
 import { Observable, Subject } from 'rxjs';
 import { MessageEvent } from '@nestjs/common';
+import { Response } from 'express';
 
 @Injectable()
 export class ReportsService {
@@ -23,7 +24,7 @@ export class ReportsService {
     return this.progressSubject.asObservable();
   }
 
-  private emitProgress(message: string, data?: any) {
+  private emitProgress(message: string, data?: Record<string, any>) {
     this.progressSubject.next({
       data: JSON.stringify({
         message,
@@ -37,12 +38,13 @@ export class ReportsService {
    * Versión que envía el progreso como texto plano al response
    * y luego envía el archivo Excel
    */
-  async writeUsersExcelWithProgress(res: any): Promise<void> {
-    const writeProgress = (message: string, data?: any) => {
+  async writeUsersExcelWithProgress(res: Response): Promise<void> {
+    const writeProgress = (message: string, data?: Record<string, any>) => {
       const progressMsg = data
         ? `${message} - ${JSON.stringify(data)}\n`
         : `${message}\n`;
       res.write(progressMsg);
+      // No necesitamos flush si configuramos bien los headers
     };
 
     writeProgress('🚀 Iniciando exportación...');
@@ -87,13 +89,18 @@ export class ReportsService {
         progress: `${progress}%`,
       });
 
-      // Pequeña pausa para que se vea el progreso
+      // Pausa para que se vea el progreso
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     writeProgress('💾 Generando archivo Excel...');
+    writeProgress(
+      '⚠️  Nota: El archivo se descargará, pero el progreso se cortará aquí',
+    );
 
-    // Cambiar headers para el archivo Excel
+    // IMPORTANTE: Limpiar los headers de texto y configurar para Excel
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    (res as any).removeHeader('Content-Type');
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -103,10 +110,9 @@ export class ReportsService {
       'attachment; filename="users_export.xlsx"',
     );
 
-    // Escribir el Excel al response
+    // Escribir el Excel al response (esto va a "romper" el stream de texto)
     await workbook.xlsx.write(res);
 
-    writeProgress('✅ Exportación completada');
     this.logger.log(`Excel with progress completed, pages processed: ${page}`);
   }
 
