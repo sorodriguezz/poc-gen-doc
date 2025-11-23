@@ -4,8 +4,11 @@ import {
   Res,
   Logger,
   BadRequestException,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { Observable } from 'rxjs';
 import { ReportsService } from './reports.service';
 import { ExportLimiterService } from './export-limiter.service';
 
@@ -17,6 +20,39 @@ export class ReportsController {
     private readonly reportsService: ReportsService,
     private readonly limiter: ExportLimiterService,
   ) {}
+
+  @Sse('users/xlsx/progress')
+  exportUsersProgress(): Observable<MessageEvent> {
+    return this.reportsService.getUsersExportProgress();
+  }
+
+  @Get('users/xlsx/stream-progress')
+  async exportUsersExcelWithProgress(@Res() res: Response) {
+    if (!this.limiter.acquire()) {
+      throw new BadRequestException(
+        'Hay demasiadas exportaciones en ejecución, inténtalo más tarde.',
+      );
+    }
+
+    // Configurar headers para streaming de texto
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    try {
+      await this.reportsService.writeUsersExcelWithProgress(res);
+    } catch (err) {
+      this.logger.error('Error generating XLSX with progress', err);
+      if (!res.headersSent) {
+        res.status(500).send('Error generating XLSX with progress');
+      }
+    } finally {
+      this.limiter.release();
+      if (!res.headersSent) {
+        res.end();
+      }
+    }
+  }
 
   @Get('users/xlsx')
   async exportUsersExcel(@Res() res: Response) {

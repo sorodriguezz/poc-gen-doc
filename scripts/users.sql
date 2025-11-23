@@ -10,4 +10,4 @@ SELECT
     'User_' || g,
     'Last_' || g,
     'user_' || g || '@example.com'
-FROM generate_series(1, 50000) AS g;
+FROM generate_series(1, 100000) AS g;
