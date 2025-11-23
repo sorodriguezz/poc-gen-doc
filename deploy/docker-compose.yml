@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    container_name: poc_export_db
+    restart: always
+    environment:
+      POSTGRES_DB: poc_db
+      POSTGRES_USER: poc_user
+      POSTGRES_PASSWORD: poc_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
