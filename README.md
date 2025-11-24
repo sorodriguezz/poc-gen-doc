@@ -279,24 +279,3 @@ Connection: keep-alive
 4. **Resource Monitoring**: Tracking de memoria y CPU
 5. **Graceful Error Handling**: Manejo robusto de errores
 6. **Response Flushing**: Envío inmediato de datos al cliente
-
-## 🤝 Contribuciones
-
-Este es un POC educativo. Areas de mejora identificadas:
-
-- [ ] Implementar cache de resultados
-- [ ] Agregar compresión de archivos
-- [ ] Soporte para múltiples formatos (CSV, PDF)
-- [ ] Interfaz web con progress bar
-- [ ] Autenticación y autorización
-- [ ] Rate limiting por usuario
-- [ ] Notificaciones push cuando termine la exportación
-
-## 📄 Licencia
-
-Este proyecto es un POC educativo sin licencia específica.
-
----
-
-**Desarrollado con NestJS + TypeScript + PostgreSQL + Docker**  
-**Fecha:** Noviembre 2025
